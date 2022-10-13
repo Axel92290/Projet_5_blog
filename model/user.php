@@ -50,14 +50,14 @@ class User
     }
 
 
-    public function verif_pword($mail)
+    public function get_pword_by_mail($mail)
     {
 
 
         global $DB;
 
         try {
-            $req = $DB->prepare("SELECT pword FROM utilisateur WHERE mail =?");
+            $req = $DB->prepare("SELECT pword FROM utilisateurs WHERE mail =?");
             $req->execute(array($mail));
 
             $req = $req->fetch();
@@ -67,5 +67,71 @@ class User
 
             return null;
         }
+
+        return $req["pword"];
+    }
+
+
+
+    public function get_user_by_mail($mail)
+    {
+
+        global $DB;
+
+        try {
+            $req = $DB->prepare("SELECT * FROM utilisateur WHERE mail =?");
+            $req->execute(array($mail));
+            $req_user = $req->fetch();
+        } catch (Exception $e) {
+            echo "Erreur : La sélection des données ne s'est pas effectuée  ";
+
+            return null;
+        }
+
+        return $req_user;
+    }
+
+
+
+    public function set_User_DateLogin_By_Id($date_login, $req_user_id)
+    {
+        global $DB;
+        try {
+            $req = $DB->prepare("UPDATE utilisateur SET date_connexion = ? WHERE id = ?");
+            $req->execute(array($date_login, $req_user_id));
+        } catch (Exception $e) {
+            echo "Erreur : La mise à jour des données ne s'est pas effectuée  ";
+
+            return null;
+        }
+        return $req;
+    }
+
+    public function get_members($user_id = null)
+    {
+        global $DB;
+
+        try {
+            $req_sql = "SELECT id, nom, prenom FROM utilisateur";
+
+            if (isset($user_id)) {
+                $req_sql = "SELECT id, nom, prenom FROM utilisateur WHERE id <> ?";
+            }
+
+            $req = $DB->prepare($req_sql);
+
+
+            if (isset($user_id)) {
+                $req->execute([$user_id]);
+            } else {
+                $req->execute();
+            }
+
+            $req_members = $req->fetchAll();
+        } catch (Exception $e) {
+            echo "Erreur : La sélection des données ne s'est pas effectuée  ";
+        }
+
+        return $req_members;
     }
 }

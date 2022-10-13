@@ -1,5 +1,6 @@
 <?php
 require_once('include.php');
+require_once('../model/user.php');
 
 
 if (isset($_SESSION['id'])) {
@@ -22,7 +23,7 @@ if (!empty($_REQUEST)) {
 
 
 
-
+$user = new User;
 
 class Login
 {
@@ -60,43 +61,46 @@ class Login
 
 
         if ($this->valid) {
-            $req = $DB->prepare("SELECT pword FROM utilisateur WHERE mail =?");
-            $req->execute(array($mail));
 
-            $req = $req->fetch();
+            $req_pword_by_mail = $this->user->get_pword_by_mail($mail);
 
-
-            if (isset($req['pword'])) {
-                if (!password_verify($pword, $req['pword'])) {
+            if ($req_pword_by_mail != null) {
+                if (isset($req_pword_by_mail)) {
+                    if (!password_verify($pword, $req_pword_by_mail)) {
+                        $this->valid  = false;
+                        $this->err_pword = "Les informations rentrées sont incorrectes.";
+                    }
+                } else {
                     $this->valid  = false;
                     $this->err_pword = "Les informations rentrées sont incorrectes.";
                 }
-            } else {
-                $this->valid  = false;
-                $this->err_pword = "Les informations rentrées sont incorrectes.";
             }
         }
 
 
+
+
+
         if ($this->valid) {
-            $req = $DB->prepare("SELECT * FROM utilisateur WHERE mail =?");
-            $req->execute(array($mail));
 
-            $req_user = $req->fetch();
-
-            if (isset($req_user['id'])) {
-                $date_connexion = date('Y-m-d H:i:s');
+            $req_user_by_mail = $this->user->get_user_by_mail($mail);
+            $req_user_id = $req_user_by_mail['id'];
 
 
-                $req = $DB->prepare("UPDATE utilisateur SET date_connexion = ? WHERE id = ?");
-                $req->execute(array($date_connexion, $req_user['id']));
+            if (isset($req_user_id)) {
+                $date_login = date('Y-m-d H:i:s');
 
-                $_SESSION['id'] = $req_user['id'];
-                $_SESSION['prenom'] = $req_user['prenom'];
-                $_SESSION['mail'] = $req_user['mail'];
-                $_SESSION['role'] = $req_user['role'];
 
-                header('Location: index.php');
+                $set_User_DateLogin_By_Id = $this->user->set_User_DateLogin_By_Id($date_login, $req_user_id);
+
+                if (isset($set_User_DateLogin_By_Id)) {
+                    $_SESSION['id'] = $req_user_by_mail['id'];
+                    $_SESSION['prenom'] = $req_user_by_mail['prenom'];
+                    $_SESSION['mail'] = $req_user_by_mail['mail'];
+                    $_SESSION['role'] = $req_user_by_mail['role'];
+                }
+
+                header('Location: ../index.php');
                 exit;
             } else {
                 $this->valid  = false;
